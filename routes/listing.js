@@ -4,7 +4,7 @@ const wrapAsync = require("../utils/wrapAsync");
 const Listing = require("../models/listing.js");
 const Review = require("../models/review.js");
 const ExpressError = require("../utils/expressError.js");
-
+const {isLoggedIn} = require("../middleware.js");
 
 // Index route
 router.get(
@@ -16,7 +16,7 @@ router.get(
 );
 
 // New route
-router.get("/new", (req, res) => {
+router.get("/new", isLoggedIn, (req, res) => {
   res.render("listings/new.ejs");
 });
 
@@ -38,7 +38,7 @@ router.post(
     if (!listing) throw new ExpressError(400, "Send Valid Data For Listing");
     const newListing = new Listing(listing);
     await newListing.save();
-    console.log(listing);
+    req.flash("success", "New listing created"); // Flashing a success message to /listings route
     res.redirect("/listings");
   })
 );
@@ -46,6 +46,7 @@ router.post(
 // Edit route
 router.get(
   "/:id/edit",
+  isLoggedIn,
   wrapAsync(async (req, res) => {
     let { id } = req.params;
     const listing = await Listing.findById(id);
@@ -56,9 +57,11 @@ router.get(
 // Update route
 router.put(
   "/:id",
+  isLoggedIn,
   wrapAsync(async (req, res) => {
     let { id } = req.params;
     await Listing.findByIdAndUpdate(id, req.body.listing);
+    req.flash("success", "Listing updated");
     res.redirect(`/listings/${id}`);
   })
 );
@@ -66,10 +69,12 @@ router.put(
 // Delete route
 router.delete(
   "/:id",
+  isLoggedIn,
   wrapAsync(async (req, res) => {
     let { id } = req.params;
     let deletedListing = await Listing.findByIdAndDelete(id);
     console.log(deletedListing);
+    req.flash("success", "Listing Deleted!");
     res.redirect("/listings");
   })
 );
