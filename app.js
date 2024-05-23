@@ -1,3 +1,7 @@
+if (process.env.NODE_ENV != "production") {
+  require("dotenv").config();
+}
+
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
@@ -7,6 +11,7 @@ const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/expressError.js");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
+const MongoStore = require("connect-mongo");
 const flash = require("connect-flash");
 const passport = require("passport");
 const localStrategy = require("passport-local");
@@ -16,9 +21,8 @@ const listingRouter = require("./routes/listing.js");
 const reviewRouter = require("./routes/review.js");
 const userRouter = require("./routes/user.js");
 
-const MONGO_URL = "mongodb://127.0.0.1:27017/airbnb";
 async function main() {
-  await mongoose.connect(MONGO_URL);
+  await mongoose.connect(process.env.MONGO_URL);
 }
 main()
   .then(() => {
@@ -37,13 +41,18 @@ app.use(express.static(path.join(__dirname, "/public")));
 app.use(cookieParser());
 app.use(
   session({
-    secret: "My secret",
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
     cookie: {
       expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URL,
+      crypto: { secret: process.env.SESSION_SECRET },
+      touchAfter: 24 * 3600,
+    }),
   })
 );
 app.use(flash());

@@ -23,9 +23,11 @@ module.exports.renderListing = async (req, res) => {
 };
 
 module.exports.createNewListing = async (req, res, next) => {
+  let { path, filename } = req.file;
   let listing = req.body.listing;
   if (!listing) throw new ExpressError(400, "Send Valid Data For Listing");
   const newListing = new Listing(listing);
+  newListing.image = { url: path, filename: filename };
   newListing.owner = req.user._id;
   await newListing.save();
   req.flash("success", "New listing created"); // Flashing a success message to /listings route
@@ -40,7 +42,12 @@ module.exports.renderEditForm = async (req, res) => {
 
 module.exports.editListing = async (req, res) => {
   let { id } = req.params;
-  await Listing.findByIdAndUpdate(id, req.body.listing);
+  let listing = await Listing.findByIdAndUpdate(id, req.body.listing);
+  if (typeof req.file !== "undefined"){
+    let { path, filename } = req.file;
+    listing.image = { url: path, filename: filename };
+    await listing.save();
+  }
   req.flash("success", "Listing updated");
   res.redirect(`/listings/${id}`);
 };
