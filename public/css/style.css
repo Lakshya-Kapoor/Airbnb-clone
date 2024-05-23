@@ -86,7 +86,8 @@ body {
 
 /* Edit and add button */
 
-.add-btn, .edit-btn {
+.add-btn,
+.edit-btn {
   background-color: #fe424d !important;
   border: none !important;
 }
